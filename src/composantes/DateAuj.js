@@ -6,6 +6,7 @@ import { fr } from "date-fns/locale";
 
 import { AstroContexte } from "../AstroContexte";
 import Mois from "./miniComposantes/Mois";
+import { faCalendarDay } from "@fortawesome/free-solid-svg-icons";
 
 const DateAuj = () => {
 
@@ -59,7 +60,10 @@ const DateAuj = () => {
         return (
             <Wrapper>
                 <h2>Calendrier</h2>
-                <p>Nous sommes le {dateForm}.</p>
+                <p>
+                    <FontAwesomeIcon icon={faCalendarDay} />
+                    <span> Nous sommes le {dateForm}.</span>
+                </p>
                 <button onClick={moisPrecedent}>Mois précédent</button>
                 <Mois moisAMontrer={moisAMontrer} prochainMois={prochainMois} />
                 <button onClick={moisProchain}>Mois suivant</button>

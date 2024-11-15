@@ -12,7 +12,6 @@ const Localiser = () => {
     const { emplacement, setEmplacement } = useContext(AstroContexte);
 
     const montrerPosition = (position) => {
-        console.log(position);
         setEmplacement({"lat": position.coords.latitude, "lng": position.coords.longitude})
     }
 

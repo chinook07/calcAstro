@@ -10,7 +10,7 @@ const Mois = ({ moisAMontrer, prochainMois }) => {
 
     // console.log(moisAMontrer, prochainMois);
 
-    const { date } = useContext(AstroContexte);
+    const { date, emplacement } = useContext(AstroContexte);
     const [donneesSoleil, setDonneesSoleil] = useState();
     const [donneesLune, setDonneesLune] = useState();
     const [cielNoir, setCielNoir] = useState([]);
@@ -23,7 +23,7 @@ const Mois = ({ moisAMontrer, prochainMois }) => {
 
     const chercherSoleil = async (e) => {
         try {
-            const res = await fetch(`https://api.sunrisesunset.io/json?lat=38.907192&lng=-77.036873&date_start=${moisAMontrer.annee}-${moisAMontrer.mois}-01&date_end=${prochainMois.annee}-${prochainMois.mois}-01&time_format=24`);
+            const res = await fetch(`https://api.sunrisesunset.io/json?lat=${emplacement.lat}&lng=${emplacement.lng}&date_start=${moisAMontrer.annee}-${moisAMontrer.mois}-01&date_end=${prochainMois.annee}-${prochainMois.mois}-01&time_format=24`);
             const donnees = await res.json();
             setDonneesSoleil(donnees.results);
 
@@ -31,7 +31,7 @@ const Mois = ({ moisAMontrer, prochainMois }) => {
 
             await Promise.all(
                 donnees.results.map(async (item, index) => {
-                    const res = fetch(`https://aa.usno.navy.mil/api/rstt/oneday?date=${item.date} &coords=41.89, 12.48`)
+                    const res = fetch(`https://aa.usno.navy.mil/api/rstt/oneday?date=${item.date} &coords=${emplacement.lat}, ${emplacement.lng}`)
                     const luneDonnees = await (await res).json();
                     luneDataArray[index] = luneDonnees.properties.data;
                 })
@@ -43,8 +43,8 @@ const Mois = ({ moisAMontrer, prochainMois }) => {
     }
 
     useEffect(() => {
-        moisAMontrer.annee && chercherSoleil()
-    }, [moisAMontrer])
+        if (emplacement.lat) moisAMontrer.annee && chercherSoleil()
+    }, [moisAMontrer, emplacement])
     
     let cielNoirArray = donneesSoleil;
 
@@ -95,6 +95,8 @@ const Mois = ({ moisAMontrer, prochainMois }) => {
         }
     }
 
+    // zones polaires!
+
     useEffect(() => {
         lumLune();
         setCielNoir(cielNoirTableau);
@@ -104,9 +106,10 @@ const Mois = ({ moisAMontrer, prochainMois }) => {
         // console.log(donneesLune, donneesSoleil);
         return (
             <Wrapper>
+                <caption>Calendrier de {format(date, "MMMM yyyy", { locale: fr })}</caption>
                 <thead>
                     <tr>
-                        <th>{format(date, "MMMM", { locale: fr })}</th>
+                        <th></th>
                         <th>Coucher de soleil</th>
                         <th>Coucher de lune</th>
                         <th>Lune</th>
@@ -145,6 +148,10 @@ const Mois = ({ moisAMontrer, prochainMois }) => {
 
 const Wrapper = styled.table`
     border: 1px solid var(--c2);
+    caption {
+        font-weight: bold;
+        margin: 10px auto;
+    }
     td {
         border: 1px dashed var(--c0);
         padding: 5px;
