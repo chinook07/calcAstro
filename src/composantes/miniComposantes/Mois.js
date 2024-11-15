@@ -6,14 +6,16 @@ import { fr } from "date-fns/locale";
 
 import { AstroContexte } from "../../AstroContexte";
 
-const Mois = () => {
+const Mois = ({ moisAMontrer, prochainMois }) => {
+
+    // console.log(moisAMontrer, prochainMois);
 
     const { date } = useContext(AstroContexte);
     const [donneesSoleil, setDonneesSoleil] = useState();
     const [donneesLune, setDonneesLune] = useState();
     const [cielNoir, setCielNoir] = useState([]);
 
-    const nDeJrs = getDaysInMonth(date);
+    const nDeJrs = getDaysInMonth(new Date(moisAMontrer.annee, moisAMontrer.mois - 1)); // modifier
     let tousJours = [];
     for (let j = 1; j <= nDeJrs; j++) {
         tousJours.push(j)
@@ -21,7 +23,7 @@ const Mois = () => {
 
     const chercherSoleil = async (e) => {
         try {
-            const res = await fetch(`https://api.sunrisesunset.io/json?lat=38.907192&lng=-77.036873&date_start=${getYear(date)}-${getMonth(date) + 1}-01&date_end=${getYear(date)}-${getMonth(date) + 2}-01&time_format=24`);
+            const res = await fetch(`https://api.sunrisesunset.io/json?lat=38.907192&lng=-77.036873&date_start=${moisAMontrer.annee}-${moisAMontrer.mois}-01&date_end=${prochainMois.annee}-${prochainMois.mois}-01&time_format=24`);
             const donnees = await res.json();
             setDonneesSoleil(donnees.results);
 
@@ -40,7 +42,9 @@ const Mois = () => {
         }
     }
 
-    useEffect(() => { chercherSoleil() }, [])
+    useEffect(() => {
+        moisAMontrer.annee && chercherSoleil()
+    }, [moisAMontrer])
     
     let cielNoirArray = donneesSoleil;
 
@@ -75,7 +79,6 @@ const Mois = () => {
                 }
             })
         }
-        console.log(cielNoirTableau);
     }
     
     const lumLune = () => {
@@ -92,62 +95,70 @@ const Mois = () => {
         }
     }
 
-    
-
     useEffect(() => {
         lumLune();
         setCielNoir(cielNoirTableau);
     }, [donneesLune])
 
-    return (
-        <Wrapper>
-            <thead>
-                <tr>
-                    <th>{format(date, "MMMM", { locale: fr })}</th>
-                    <th>Début</th>
-                    <th></th>
-                    <th>Lune</th>
-                    <th></th>
-                    <th>Fin</th>
-                </tr>
-            </thead>
-            <tbody>
-                {
-                    donneesSoleil !== undefined && donneesLune !== undefined && tousJours.map((item, index) => {
-                        return (
-                            <tr key={index}>
-                                <td>{item}</td>
-                                <td>{donneesSoleil[index].last_light.slice(0,5).replace(":", " h ")}</td>
-                                <td>
-                                    {
-                                        cielNoir && cielNoir.length && cielNoir[index].luneBye && <span>{cielNoir[index].luneBye.replace(":", " h ")}</span>
-                                    }
-                                </td>
-                                <td>
-                                    {
-                                        (donneesLune[index].fracillum >= "50 %" || donneesLune[index].fracillum === "100%") && donneesLune[index].fracillum.length > 2 ? <span>{donneesLune[index].fracillum}</span> : <span>{donneesLune[index].fracillum}</span>
-                                    }
-                                </td>
-                                <td>
-                                    {
-                                        cielNoir && cielNoir.length && cielNoir[index].luneAllo && <span>{cielNoir[index].luneAllo.replace(":", " h ")}</span>
-                                    }
-                                </td>
-                                <td>{donneesSoleil[index + 1].first_light.slice(0,5).replace(":", " h ")}</td>
-                            </tr>
-                        )
-                    })
-                }
-            </tbody>
-        </Wrapper>
-    )
+    if (donneesSoleil !== undefined && donneesLune !== undefined && cielNoir && cielNoir.length) {
+        // console.log(donneesLune, donneesSoleil);
+        return (
+            <Wrapper>
+                <thead>
+                    <tr>
+                        <th>{format(date, "MMMM", { locale: fr })}</th>
+                        <th>Coucher de soleil</th>
+                        <th>Coucher de lune</th>
+                        <th>Lune</th>
+                        <th>Lever de lune</th>
+                        <th>Lever de soleil</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {
+                        tousJours.map((item, index) => {
+                            return (
+                                <Rangee
+                                    key={index}
+                                    $fond={cielNoir[index].pollution && !cielNoir[index].luneAllo && !cielNoir[index].luneBye ? "--c5" : "--c1"}
+                                    $couleur={cielNoir[index].pollution && !cielNoir[index].luneAllo && !cielNoir[index].luneBye ? "--c0" : "--c3"}
+                                >
+                                    <td>{item}</td>
+                                    <td>{donneesSoleil[index].last_light.slice(0,5).replace(":", " h ")}</td>
+                                    <td>{cielNoir[index].luneBye.replace(":", " h ")}</td>
+                                    <td>
+                                        {
+                                            (donneesLune[index].fracillum >= "50 %" || donneesLune[index].fracillum === "100%") && donneesLune[index].fracillum.length > 2 ? <span>{donneesLune[index].fracillum}</span> : <span>{donneesLune[index].fracillum}</span>
+                                        }
+                                    </td>
+                                    <td>{cielNoir[index].luneAllo.replace(":", " h ")}</td>
+                                    <td>{donneesSoleil[index + 1].first_light.slice(0,5).replace(":", " h ")}</td>
+                                </Rangee>
+                            )
+                        })
+                    }
+                </tbody>
+            </Wrapper>
+        )
+    }
 }
 
 const Wrapper = styled.table`
-    border: 1px solid var(--c0);
+    border: 1px solid var(--c2);
     td {
         border: 1px dashed var(--c0);
         padding: 5px;
+    }
+`
+
+const Rangee = styled.tr`
+    background-color: var(${props => props.$fond});
+    
+    td {
+        color: var(${props => props.$couleur});
+        span {
+            color: var(${props => props.$couleur});
+        }
     }
 `
 

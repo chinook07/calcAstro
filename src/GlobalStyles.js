@@ -3,10 +3,10 @@ import { createGlobalStyle } from "styled-components";
 export default createGlobalStyle`
     * {
         box-sizing: border-box;
-        color: var(--c1);
+        color: var(--c3);
     }
     html {
-        background-color: var(--c2);
+        background-color: var(--c1);
 
     }
     body {
@@ -16,7 +16,7 @@ export default createGlobalStyle`
     button,
     input,
     select {
-        background-color: var(--c3);
+        background-color: var(--c0);
         border-radius: 5px;
         padding: 5px;
     }

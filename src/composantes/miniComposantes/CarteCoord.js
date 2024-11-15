@@ -1,14 +1,22 @@
-import { useState, useEffect } from "react";
+import { useContext } from "react";
 import { LayersControl, MapContainer, ScaleControl, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import styled from "styled-components";
 
+import { AstroContexte } from "../../AstroContexte";
+
 const CarteCoord = () => {
 
-    const [emplacement, setEmplacement] = useState({});
+    const { emplacement, setEmplacement } = useContext(AstroContexte);
         
-    const ChoixCliquerCarte = () => {
+    const ChoixCliquerCarte = (e) => {
         useMapEvents({
-            click(e) {setEmplacement(e.latlng)}
+            click(e) {
+                setEmplacement({
+                    "lat": e.latlng.lat,
+                    "lng": e.latlng.lng
+                })
+                console.log(e.latlng);
+            }
         })
     }
 
@@ -46,6 +54,9 @@ const CarteCoord = () => {
 const Wrapper = styled(MapContainer)`
     height: 300px;
     width: 400px;
+    * {
+        color: var(--c1);
+    }
 `
 
 export default CarteCoord;

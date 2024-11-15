@@ -1,35 +1,57 @@
 import styled from "styled-components";
+import { useContext } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
+import { AstroContexte } from "../AstroContexte";
 import ListeVilles from "./miniComposantes/ListeVilles";
-import EntreeCoord from "./miniComposantes/EntreeCoord";
 import CarteCoord from "./miniComposantes/CarteCoord";
+import { faArrowRightToCity, faLocationCrosshairs, faMapLocationDot } from "@fortawesome/free-solid-svg-icons";
 
 const Localiser = () => {
 
+    const { emplacement, setEmplacement } = useContext(AstroContexte);
+
+    const montrerPosition = (position) => {
+        console.log(position);
+        setEmplacement({"lat": position.coords.latitude, "lng": position.coords.longitude})
+    }
+
     const localMoi = () => {
-        
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(montrerPosition);
+        } else {
+            console.log("erreur");
+        }
     }
     return (
         <Wrapper>
             <h2>Votre emplacement</h2>
             <Choix3>
-                <div>
-                    <p>Choisissez une ville parmi cette liste :</p>
+                <form>
+                    <label htmlFor="ville">
+                        <FontAwesomeIcon icon={faArrowRightToCity} />
+                        <span> Observation à partir d'une grande ville : </span>
+                    </label>
                     <ListeVilles />
-                </div>
+                </form>
                 <div>
-                    <p>Choisissez votre lieu sur la carte.</p>
+                    <p>
+                        <FontAwesomeIcon icon={faMapLocationDot} />
+                        <span> Choix à partir de la carte :</span>
+                    </p>
                     <CarteCoord />
                 </div>
                 <div>
-                    <p>Ou géolocalisez-moi.</p>
+                    <p>
+                        <FontAwesomeIcon icon={faLocationCrosshairs} />
+                        <span> Géolocalisation automatique</span>
+                    </p>
                     <button onClick={localMoi}>Trouver mon emplacement</button>
                 </div>
             </Choix3>
-            <EntreeCoord />
-            
-            
+            {
+                emplacement && emplacement.lat && <p>Coordonnées trouvées : {emplacement.lat}, {emplacement.lng}</p>
+            }
         </Wrapper>
     )
 }

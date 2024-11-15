@@ -4,7 +4,7 @@ export const AstroContexte = createContext();
 
 const AstroContexteProvider = ({ children }) => {
 
-    const [emplacement, setEmplacement] = useState();
+    const [emplacement, setEmplacement] = useState({});
     const [date, setDate] = useState();
     const [pret, setPret] = useState(false);
 
