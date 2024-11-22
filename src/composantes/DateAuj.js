@@ -14,7 +14,8 @@ const DateAuj = () => {
 
     const [moisAMontrer, setMoisAMontrer] = useState({});
     const [prochainMois, setProchainMois] = useState({});
-    const [dateForm, setDateForm] = useState("")
+    const [dateForm, setDateForm] = useState("");
+    const [moisPret, setMoisPret] = useState(false);
 
     useEffect(() => {
         if (date !== undefined) {
@@ -38,8 +39,11 @@ const DateAuj = () => {
     }, [date])
 
     const moisPrecedent = () => {
+        console.log("precedent");
+        setMoisPret(false);
         setProchainMois(moisAMontrer)
         if (moisAMontrer.mois === "01") {
+            console.log("janvier");
             setMoisAMontrer({
                 "annee": (parseInt(moisAMontrer.annee) - 1).toString(),
                 "mois": "12"
@@ -52,9 +56,12 @@ const DateAuj = () => {
                 "mois": nouveauMois
             })
         }
+        console.log("nouveau mois");
     }
 
     const moisProchain = () => {
+        console.log("prochain");
+        setMoisPret(false);
         setMoisAMontrer(prochainMois)
         if (prochainMois.mois === "12") {
             setProchainMois({
@@ -80,7 +87,7 @@ const DateAuj = () => {
                     <span> Nous sommes le {dateForm}.</span>
                 </p>
                 <button onClick={moisPrecedent}>Mois précédent</button>
-                <Mois moisAMontrer={moisAMontrer} prochainMois={prochainMois} />
+                <Mois moisAMontrer={moisAMontrer} prochainMois={prochainMois} moisPret={moisPret} setMoisPret={setMoisPret} />
                 <button onClick={moisProchain}>Mois suivant</button>
             </Wrapper>
         )
