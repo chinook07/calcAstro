@@ -19,24 +19,39 @@ const DateAuj = () => {
     useEffect(() => {
         if (date !== undefined) {
             setDateForm(format(date, "dd MMMM", { locale: fr }));
+            let anneePresente = format(date, "yyyy");
+            let moisPresent = format(date, "MM");
             setMoisAMontrer({
-                "annee": format(date, "yyyy"),
-                "mois": format(date, "MM")
+                "annee": anneePresente,
+                "mois": moisPresent
             })
             if (format(date, "MM") === "12") {
                 setProchainMois({
-                    "annee": (parseInt(format(date, "yyyy")) + 1).toString(),
-                    "mois": format(date, "01")
+                    "annee": (parseInt(anneePresente) + 1).toString(),
+                    "mois": "01"
                 })
             } else setProchainMois({
-                "annee": format(date, "yyyy"),
-                "mois": (parseInt(format(date, "MM")) + 1).toString()
+                "annee": anneePresente,
+                "mois": (parseInt(moisPresent) + 1).toString()
             })
         }
     }, [date])
 
     const moisPrecedent = () => {
-        
+        setProchainMois(moisAMontrer)
+        if (moisAMontrer.mois === "01") {
+            setMoisAMontrer({
+                "annee": (parseInt(moisAMontrer.annee) - 1).toString(),
+                "mois": "12"
+            })
+        } else {
+            let nouveauMois = (parseInt(moisAMontrer.mois) - 1).toString();
+            if (nouveauMois.length === 1) nouveauMois = "0" + nouveauMois;
+            setMoisAMontrer({
+                "annee": moisAMontrer.annee,
+                "mois": nouveauMois
+            })
+        }
     }
 
     const moisProchain = () => {
@@ -48,7 +63,7 @@ const DateAuj = () => {
             })
         } else {
             let nouveauMois = (parseInt(prochainMois.mois) + 1).toString();
-            if (nouveauMois.length === 1) nouveauMois = "0" + nouveauMois
+            if (nouveauMois.length === 1) nouveauMois = "0" + nouveauMois;
             setProchainMois({
                 "annee": prochainMois.annee,
                 "mois": nouveauMois

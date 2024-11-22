@@ -1,24 +1,28 @@
 import { useState, useContext, useEffect } from "react";
 import styled from "styled-components";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { format, lastDayOfMonth, getMonth, getYear, getDaysInMonth, isAfter } from "date-fns";
+import { format, getDaysInMonth } from "date-fns";
 import { fr } from "date-fns/locale";
 
 import { AstroContexte } from "../../AstroContexte";
+import { faMoon, faSun } from "@fortawesome/free-regular-svg-icons";
+import { faArrowDown, faArrowUp, faPercent } from "@fortawesome/free-solid-svg-icons";
 
 const Mois = ({ moisAMontrer, prochainMois }) => {
-
-    // console.log(moisAMontrer, prochainMois);
 
     const { date, emplacement } = useContext(AstroContexte);
     const [donneesSoleil, setDonneesSoleil] = useState();
     const [donneesLune, setDonneesLune] = useState();
     const [cielNoir, setCielNoir] = useState([]);
+    const [listeJours, setListeJours] = useState();
 
-    const nDeJrs = getDaysInMonth(new Date(moisAMontrer.annee, moisAMontrer.mois - 1)); // modifier
-    let tousJours = [];
-    for (let j = 1; j <= nDeJrs; j++) {
-        tousJours.push(j)
+    const trouverNdeJours = () => {
+        const nDeJrs = getDaysInMonth(new Date(moisAMontrer.annee, moisAMontrer.mois - 1)); // modifier
+        let tousJours = [];
+        for (let j = 1; j <= nDeJrs; j++) {
+            tousJours.push(j)
+        }
+        setListeJours(tousJours);
     }
 
     const chercherSoleil = async (e) => {
@@ -31,7 +35,7 @@ const Mois = ({ moisAMontrer, prochainMois }) => {
 
             await Promise.all(
                 donnees.results.map(async (item, index) => {
-                    const res = fetch(`https://aa.usno.navy.mil/api/rstt/oneday?date=${item.date} &coords=${emplacement.lat}, ${emplacement.lng}`)
+                    const res = fetch(`https://aa.usno.navy.mil/api/rstt/oneday?date=${item.date}&coords=${emplacement.lat},${emplacement.lng}&tz=-5&dst=true`)
                     const luneDonnees = await (await res).json();
                     luneDataArray[index] = luneDonnees.properties.data;
                 })
@@ -42,84 +46,93 @@ const Mois = ({ moisAMontrer, prochainMois }) => {
         }
     }
 
-    useEffect(() => {
-        if (emplacement.lat) moisAMontrer.annee && chercherSoleil()
-    }, [moisAMontrer, emplacement])
-    
-    let cielNoirArray = donneesSoleil;
+    const phasesLune = () => {
+        let cielNoirTableau = donneesSoleil;
 
-    let cielNoirTableau = [];
+        // let cielNoirTableau = [];
 
-    if (donneesSoleil && donneesLune) {
-        for (let jr = 0; jr < donneesSoleil.length - 1; jr++) {
-            cielNoirTableau.push({
-                "date": donneesSoleil[jr].date,
-                "nuitDebut": donneesSoleil[jr].last_light,
-                "luneBye": "",
-                "luneAllo": "",
-                "nuitFin": donneesSoleil[jr + 1].first_light,
-                "pourcentage": donneesLune[jr].fracillum,
-                "pollution": false
-            })
-            if (donneesLune[jr].curphase === "Waxing Gibbous" || donneesLune[jr].curphase === "Full Moon" || donneesLune[jr].curphase === "Waning Gibbous") {
-                cielNoirTableau[jr].pollution = true
+        if (donneesSoleil && donneesLune) {
+            for (let jr = 0; jr < donneesSoleil.length - 1; jr++) {
+                cielNoirTableau.push({
+                    "date": donneesSoleil[jr].date,
+                    "nuitDebut": donneesSoleil[jr].last_light,
+                    "luneBye": "",
+                    "luneAllo": "",
+                    "nuitFin": donneesSoleil[jr + 1].first_light,
+                    "pourcentage": donneesLune[jr].fracillum,
+                    "pollution": false
+                })
+                if (donneesLune[jr].curphase === "Waxing Gibbous" || donneesLune[jr].curphase === "Full Moon" || donneesLune[jr].curphase === "Waning Gibbous") {
+                    cielNoirTableau[jr].pollution = true
+                }
+                donneesLune[jr].moondata.forEach(item => {
+                    if (item.phen === "Set" && item.time > cielNoirTableau[jr].nuitDebut) {
+                        cielNoirTableau[jr].luneBye = item.time
+                    }
+                    if (item.phen === "Set" && item.time < cielNoirTableau[jr].nuitDebut && cielNoirTableau[jr-1] && item.time < cielNoirTableau[jr-1].nuitFin) {
+                        cielNoirTableau[jr-1].luneBye = item.time
+                    }
+                    if (item.phen === "Rise" && item.time > cielNoirTableau[jr].nuitDebut) {
+                        cielNoirTableau[jr].luneAllo = item.time
+                    }
+                    if (item.phen === "Rise" && cielNoirTableau[jr-1] && item.time < cielNoirTableau[jr-1].nuitDebut && item.time < cielNoirTableau[jr-1].nuitFin) {
+                        cielNoirTableau[jr-1].luneAllo = item.time
+                    }
+                })
             }
-            donneesLune[jr].moondata.forEach(item => {
-                if (item.phen === "Set" && item.time > cielNoirTableau[jr].nuitDebut) {
-                    cielNoirTableau[jr].luneBye = item.time
-                }
-                if (item.phen === "Set" && item.time < cielNoirTableau[jr].nuitDebut && cielNoirTableau[jr-1] && item.time < cielNoirTableau[jr-1].nuitFin) {
-                    cielNoirTableau[jr-1].luneBye = item.time
-                }
-                if (item.phen === "Rise" && item.time > cielNoirTableau[jr].nuitDebut) {
-                    cielNoirTableau[jr].luneAllo = item.time
-                }
-                if (item.phen === "Rise" && cielNoirTableau[jr-1] && item.time < cielNoirTableau[jr-1].nuitDebut && item.time < cielNoirTableau[jr-1].nuitFin) {
-                    cielNoirTableau[jr-1].luneAllo = item.time
-                }
-            })
         }
+        setCielNoir(cielNoirTableau);
     }
-    
+
     const lumLune = () => {
         if (donneesLune !== undefined) {
             donneesLune.forEach((item, index) => {
                 if (item.curphase === "Waxing Gibbous" || item.curphase === "Full Moon" || item.curphase === "Waning Gibbous") {
                     // cielNoirArray[index].heuresLune = item.moondata;
                     item.moondata.forEach(item => {
-                        if (item.phen === "Rise") cielNoirArray[index].leverLune = item.time
-                        if (item.phen === "Set") cielNoirArray[index].coucherLune = item.time
+                        if (item.phen === "Rise") cielNoir[index].leverLune = item.time
+                        if (item.phen === "Set") cielNoir[index].coucherLune = item.time
                     })
                 }
             });
         }
     }
 
+    useEffect(() => {
+        if (emplacement.lat && moisAMontrer.annee) {
+            console.log("je cherche soleil");
+            chercherSoleil()
+            console.log("je cherche n de jours");
+            trouverNdeJours()
+            console.log("je cherche phases de lune");
+            phasesLune()
+            console.log("je cherche lun de lune");
+            lumLune()
+        }
+    }, [moisAMontrer, emplacement])
+    
+
     // zones polaires!
 
-    useEffect(() => {
-        lumLune();
-        setCielNoir(cielNoirTableau);
-    }, [donneesLune])
 
     if (donneesSoleil !== undefined && donneesLune !== undefined && cielNoir && cielNoir.length) {
-        // console.log(donneesLune, donneesSoleil);
+        console.log(donneesLune, donneesSoleil);
         return (
             <Wrapper>
                 <caption>Calendrier de {format(date, "MMMM yyyy", { locale: fr })}</caption>
                 <thead>
                     <tr>
                         <th></th>
-                        <th>Coucher de soleil</th>
-                        <th>Coucher de lune</th>
-                        <th>Lune</th>
-                        <th>Lever de lune</th>
-                        <th>Lever de soleil</th>
+                        <th><FontAwesomeIcon icon={faSun} /> <FontAwesomeIcon icon={faArrowDown} /></th>
+                        <th><FontAwesomeIcon icon={faMoon} /> <FontAwesomeIcon icon={faArrowDown} /></th>
+                        <th><FontAwesomeIcon icon={faMoon} /> <FontAwesomeIcon icon={faPercent} /></th>
+                        <th><FontAwesomeIcon icon={faMoon} /> <FontAwesomeIcon icon={faArrowUp} /></th>
+                        <th><FontAwesomeIcon icon={faSun} /> <FontAwesomeIcon icon={faArrowUp} /></th>
                     </tr>
                 </thead>
                 <tbody>
                     {
-                        tousJours.map((item, index) => {
+                        listeJours.map((item, index) => {
                             return (
                                 <Rangee
                                     key={index}
@@ -127,15 +140,23 @@ const Mois = ({ moisAMontrer, prochainMois }) => {
                                     $couleur={cielNoir[index].pollution && !cielNoir[index].luneAllo && !cielNoir[index].luneBye ? "--c0" : "--c3"}
                                 >
                                     <td>{item}</td>
-                                    <td>{donneesSoleil[index].last_light.slice(0,5).replace(":", " h ")}</td>
-                                    <td>{cielNoir[index].luneBye.replace(":", " h ")}</td>
+                                    {
+                                        donneesSoleil[index].last_light
+                                            ? <td>{donneesSoleil[index].last_light.slice(0, 5).replace(":", " h ")}</td>
+                                            : <td>N/D</td>
+                                    }
+                                    <td>{cielNoir[index].luneBye.replace(":", " h ").replace(" ST", "").replace(" DT", "")}</td>
                                     <td>
                                         {
                                             (donneesLune[index].fracillum >= "50 %" || donneesLune[index].fracillum === "100%") && donneesLune[index].fracillum.length > 2 ? <span>{donneesLune[index].fracillum}</span> : <span>{donneesLune[index].fracillum}</span>
                                         }
                                     </td>
-                                    <td>{cielNoir[index].luneAllo.replace(":", " h ")}</td>
-                                    <td>{donneesSoleil[index + 1].first_light.slice(0,5).replace(":", " h ")}</td>
+                                    <td>{cielNoir[index].luneAllo.replace(":", " h ").replace(" ST", "").replace(" DT", "")}</td>
+                                    {
+                                        donneesSoleil[index + 1].first_light
+                                            ? <td>{donneesSoleil[index + 1].first_light.slice(0,5).replace(":", " h ")}</td>
+                                            : <td>N/D</td>
+                                    }
                                 </Rangee>
                             )
                         })
